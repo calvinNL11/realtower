@@ -24,7 +24,7 @@ public class PickUpScript : MonoBehaviour
         // Als layer niet bestaat, fallback naar default (0)
         if (holdLayer == -1)
         {
-            Debug.LogWarning("Layer 'block' bestaat niet! Script gebruikt Default layer (0).");
+           
             holdLayer = 0;
         }
     }

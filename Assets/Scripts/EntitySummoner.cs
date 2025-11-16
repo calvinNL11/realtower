@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class EntitySummoner : MonoBehaviour
@@ -11,8 +11,20 @@ public class EntitySummoner : MonoBehaviour
 
     static GlobalData global;
 
+    // ✅ NEW — Resets everything for scene reloads
+    public static void ResetStatics()
+    {
+        EnemiesInGame = new List<Enemy>();
+        EnemiesInGameTransform = new List<Transform>();
+        EnemyPrefabs = new Dictionary<int, GameObject>();
+        EnemyObjectPools = new Dictionary<int, Queue<Enemy>>();
+
+        IsInitialized = false;  // Forces init() to run again next scene
+    }
+
     public static void init()
     {
+        // ✅ Runs every new scene (because ResetStatics sets IsInitialized = false)
         if (IsInitialized) return;
 
         global = GameObject.FindObjectOfType<GlobalData>();
@@ -22,6 +34,7 @@ public class EntitySummoner : MonoBehaviour
         EnemiesInGame = new List<Enemy>();
         EnemiesInGameTransform = new List<Transform>();
 
+        // Load all enemy spawn data
         Enemysummondata[] enemies = Resources.LoadAll<Enemysummondata>("Enemies");
         foreach (var enemy in enemies)
         {
@@ -46,15 +59,17 @@ public class EntitySummoner : MonoBehaviour
 
         if (pool.Count > 0)
         {
+            // Reuse from pool
             summonedEnemy = pool.Dequeue();
             summonedEnemy.gameObject.SetActive(true);
             summonedEnemy.Init();
         }
         else
         {
+            // Instantiate new enemy
             GameObject newEnemy = Object.Instantiate(
                 EnemyPrefabs[EnemyID],
-                GameLoopManager.NodePositions[0],
+                GameLoopManager.NodePositions[0], // Spawn at first node
                 Quaternion.identity
             );
 
@@ -87,7 +102,6 @@ public class EntitySummoner : MonoBehaviour
             global.EnemiesInScene.Remove(enemy.gameObject);
     }
 }
-
 
 
 

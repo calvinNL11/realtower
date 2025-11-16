@@ -1,18 +1,22 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class TurretScript : MonoBehaviour
 {
-    public enum TargettingType { First, Strong, Weak, Last }
+    public enum TargetingType { First, Strong, Weak, Last }
 
+    [Header("References")]
     GlobalData WorldAccessData;
 
+    [Header("Targeting")]
     public LayerMask EnemyMask;
     public float Range = 25f;
     public GameObject Target;
+    public bool AllowSharedTargets = false; // 👈 NEW toggle
 
-    public float AttackSpeed = 1f;
-    public float Damage = 5f;
-    float Delay;
+    [Header("Attack Settings")]
+    public float AttackSpeed = 5f;
+    public float Damage = 10f;
+    private float Delay;
 
     void Start()
     {
@@ -24,16 +28,27 @@ public class TurretScript : MonoBehaviour
     {
         if (Target != null)
         {
+            Enemy e = Target.GetComponent<Enemy>();
+
+            // Target destroyed or inactive
+            if (e == null || !Target.activeInHierarchy)
+            {
+                ReleaseTarget();
+                return;
+            }
+
+            // Rotate toward target
             Vector3 look = new Vector3(Target.transform.position.x,
                                        transform.position.y,
                                        Target.transform.position.z);
-
             transform.LookAt(look);
+
+            // Attack if ready
             Attack();
 
-            // target kwijt?
+            // Out of range? Lose target
             if (Vector3.Distance(transform.position, Target.transform.position) > Range)
-                Target = null;
+                ReleaseTarget();
         }
         else
         {
@@ -47,7 +62,13 @@ public class TurretScript : MonoBehaviour
 
         if (Delay <= 0f)
         {
-            Target.GetComponent<Enemy>().TakeDamage(Damage);
+            if (Target != null)
+            {
+                Enemy e = Target.GetComponent<Enemy>();
+                if (e != null)
+                    e.TakeDamage(Damage);
+            }
+
             Delay = AttackSpeed;
         }
     }
@@ -67,6 +88,10 @@ public class TurretScript : MonoBehaviour
             Enemy e = obj.GetComponent<Enemy>();
             if (e == null) continue;
 
+            // 👇 Skip enemies already targeted if shared targeting is OFF
+            if (!AllowSharedTargets && e.IsTargeted) continue;
+
+            // Example: using TrueDistance for path-based priority
             if (e.TrueDistance < bestDist)
             {
                 bestDist = e.TrueDistance;
@@ -75,7 +100,26 @@ public class TurretScript : MonoBehaviour
         }
 
         if (bestTarget != null)
+        {
             Target = bestTarget;
+            Enemy e = Target.GetComponent<Enemy>();
+
+            // 👇 Mark as targeted only if exclusive targeting mode
+            if (e != null && !AllowSharedTargets)
+                e.IsTargeted = true;
+        }
+    }
+
+    void ReleaseTarget()
+    {
+        if (Target != null)
+        {
+            Enemy e = Target.GetComponent<Enemy>();
+            if (e != null && !AllowSharedTargets)
+                e.IsTargeted = false;
+
+            Target = null;
+        }
     }
 
     private void OnDrawGizmosSelected()

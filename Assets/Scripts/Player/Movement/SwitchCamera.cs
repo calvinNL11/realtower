@@ -9,7 +9,7 @@ public class SwitchCamera : MonoBehaviour
 
     private bool isCamera1Active = true;
     private bool canSwitch = true;   // cooldown flag
-    public float cooldownTime = 3f;  // 3 seconden cooldown
+    public float cooldownTime = 1f;  // 3 seconden cooldown
 
     private void Start()
     {
@@ -18,7 +18,7 @@ public class SwitchCamera : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && canSwitch)
+        if (Input.GetKeyDown(KeyCode.O) && canSwitch)
         {
             ManageCamera();
         }
